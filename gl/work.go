@@ -40,7 +40,9 @@ uintptr_t process(struct fnargs* cargs, char* parg0, char* parg1, char* parg2, i
 */
 import "C"
 
-import "unsafe"
+import (
+	"unsafe"
+)
 
 const workbufLen = 3
 

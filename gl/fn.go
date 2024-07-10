@@ -175,9 +175,6 @@ const (
 	glfnVertexAttribPointer
 	glfnViewport
 
-	// Allows running functions on the thread that handles the OpenGL context.
-	glfnRunOnContextThread
-
 	// ES 3.0 functions
 	glfnUniformMatrix2x3fv
 	glfnUniformMatrix3x2fv
@@ -194,6 +191,9 @@ const (
 	glfnUniform2uiv
 	glfnUniform3uiv
 	glfnUniform4uiv
+
+	// Allows running functions on the thread that handles the OpenGL context.
+	glfnRunOnContextThread
 )
 
 func goString(buf []byte) string {
