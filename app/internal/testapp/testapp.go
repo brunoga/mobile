@@ -11,13 +11,13 @@ import (
 	"log"
 	"net"
 
-	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/app/internal/apptest"
-	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/paint"
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/event/touch"
-	"golang.org/x/mobile/gl"
+	"github.com/brunoga/mobile/app"
+	"github.com/brunoga/mobile/app/internal/apptest"
+	"github.com/brunoga/mobile/event/lifecycle"
+	"github.com/brunoga/mobile/event/paint"
+	"github.com/brunoga/mobile/event/size"
+	"github.com/brunoga/mobile/event/touch"
+	"github.com/brunoga/mobile/gl"
 )
 
 func main() {

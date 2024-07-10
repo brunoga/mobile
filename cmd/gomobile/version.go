@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.org/x/mobile/internal/sdkpath"
+	"github.com/brunoga/mobile/internal/sdkpath"
 )
 
 var cmdVersion = &command{
@@ -26,7 +26,7 @@ Version prints versions of the gomobile binary and tools
 }
 
 func runVersion(cmd *command) (err error) {
-	// Check this binary matches the version in golang.org/x/mobile/cmd/gomobile
+	// Check this binary matches the version in github.com/brunoga/mobile/cmd/gomobile
 	// source code in GOPATH. If they don't match, currently there is no
 	// way to reliably identify the revision number this binary was built
 	// against.
@@ -36,7 +36,7 @@ func runVersion(cmd *command) (err error) {
 			return "", err
 		}
 		bindir := filepath.Dir(bin)
-		cmd := exec.Command("go", "list", "-f", "{{.Stale}}", "golang.org/x/mobile/cmd/gomobile")
+		cmd := exec.Command("go", "list", "-f", "{{.Stale}}", "github.com/brunoga/mobile/cmd/gomobile")
 		cmd.Env = append(os.Environ(), "GOBIN="+bindir)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
@@ -65,7 +65,7 @@ func runVersion(cmd *command) (err error) {
 }
 
 func mobileRepoRevision() (rev string, err error) {
-	b, err := exec.Command("go", "list", "-f", "{{.Dir}}", "golang.org/x/mobile/app").CombinedOutput()
+	b, err := exec.Command("go", "list", "-f", "{{.Dir}}", "github.com/brunoga/mobile/app").CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("mobile repo not found: %v, %s", err, b)
 	}

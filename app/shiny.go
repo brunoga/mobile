@@ -9,12 +9,12 @@ package app
 import (
 	"log"
 
+	"github.com/brunoga/mobile/event/lifecycle"
+	"github.com/brunoga/mobile/event/mouse"
+	"github.com/brunoga/mobile/event/touch"
+	"github.com/brunoga/mobile/gl"
 	"golang.org/x/exp/shiny/driver/gldriver"
 	"golang.org/x/exp/shiny/screen"
-	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/mouse"
-	"golang.org/x/mobile/event/touch"
-	"golang.org/x/mobile/gl"
 )
 
 func main(f func(a App)) {

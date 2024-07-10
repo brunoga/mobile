@@ -28,12 +28,12 @@ import (
 	"runtime"
 	"sync"
 
-	"golang.org/x/mobile/event/key"
-	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/paint"
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/event/touch"
-	"golang.org/x/mobile/geom"
+	"github.com/brunoga/mobile/event/key"
+	"github.com/brunoga/mobile/event/lifecycle"
+	"github.com/brunoga/mobile/event/paint"
+	"github.com/brunoga/mobile/event/size"
+	"github.com/brunoga/mobile/event/touch"
+	"github.com/brunoga/mobile/geom"
 )
 
 var initThreadID uint64
