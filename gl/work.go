@@ -139,7 +139,7 @@ func (ctx *context) DoWork() {
 			}
 		}
 
-		var ret C.ulong
+		var ret C.uintptr_t
 		if len(queue) > 0 {
 			// Process the queued GL functions.
 			for i, q := range queue {
