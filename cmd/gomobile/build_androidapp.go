@@ -66,6 +66,7 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 	}
 
 	libFiles := []string{}
+	extraLibFiles := []string{}
 	nmpkgs := make(map[string]map[string]bool) // map: arch -> extractPkgs' output
 
 	for _, t := range targets {
@@ -89,6 +90,16 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 			return nil, err
 		}
 		libFiles = append(libFiles, libPath)
+
+		err = processDirectory(filepath.Join(dir, "lib", toolchain.abi), func(srcPath, dstPath string) error {
+			if strings.HasSuffix(srcPath, ".so") {
+				extraLibFiles = append(extraLibFiles, filepath.Join("lib", toolchain.abi, dstPath))
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	block, _ := pem.Decode([]byte(debugCert))
@@ -188,49 +199,18 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 		iconPath string
 	}
 	assetsDir := filepath.Join(dir, "assets")
-	assetsDirExists := true
-	fi, err := os.Stat(assetsDir)
+	err = processDirectory(assetsDir, func(srcPath, dstPath string) error {
+		if rel, err := filepath.Rel(assetsDir, srcPath); rel == "icon.png" && err == nil {
+			arsc.iconPath = srcPath
+			// TODO returning here does not write the assets/icon.png to the final assets output,
+			// making it unavailable via the assets API. Should the file be duplicated into assets
+			// or should assets API be able to retrieve files from the generated resource table?
+			return nil
+		}
+		return apkwWriteFile(filepath.Join("assets", dstPath), srcPath)
+	})
 	if err != nil {
-		if os.IsNotExist(err) {
-			assetsDirExists = false
-		} else {
-			return nil, err
-		}
-	} else {
-		assetsDirExists = fi.IsDir()
-	}
-	if assetsDirExists {
-		// if assets is a symlink, follow the symlink.
-		assetsDir, err = filepath.EvalSymlinks(assetsDir)
-		if err != nil {
-			return nil, err
-		}
-		err = filepath.Walk(assetsDir, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if name := filepath.Base(path); strings.HasPrefix(name, ".") {
-				// Do not include the hidden files.
-				return nil
-			}
-			if info.IsDir() {
-				return nil
-			}
-
-			if rel, err := filepath.Rel(assetsDir, path); rel == "icon.png" && err == nil {
-				arsc.iconPath = path
-				// TODO returning here does not write the assets/icon.png to the final assets output,
-				// making it unavailable via the assets API. Should the file be duplicated into assets
-				// or should assets API be able to retrieve files from the generated resource table?
-				return nil
-			}
-
-			name := "assets/" + path[len(assetsDir)+1:]
-			return apkwWriteFile(name, path)
-		})
-		if err != nil {
-			return nil, fmt.Errorf("asset %v", err)
-		}
+		return nil, err
 	}
 
 	bxml, err := binres.UnmarshalXML(bytes.NewReader(manifestData), arsc.iconPath != "", buildAndroidAPI)

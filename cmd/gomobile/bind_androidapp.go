@@ -171,43 +171,27 @@ func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []tar
 		// TODO(hajimehoshi): This works only with Go tools that assume all source files are in one directory.
 		// Fix this to work with other Go tools.
 		assetsDir := filepath.Join(filepath.Dir(pkg.GoFiles[0]), "assets")
-		assetsDirExists := false
-		if fi, err := os.Stat(assetsDir); err == nil {
-			assetsDirExists = fi.IsDir()
-		} else if !os.IsNotExist(err) {
-			return err
-		}
-
-		if assetsDirExists {
-			err := filepath.Walk(
-				assetsDir, func(path string, info os.FileInfo, err error) error {
-					if err != nil {
-						return err
-					}
-					if info.IsDir() {
-						return nil
-					}
-					f, err := os.Open(path)
-					if err != nil {
-						return err
-					}
-					defer f.Close()
-					name := "assets/" + path[len(assetsDir)+1:]
-					if orig, exists := files[name]; exists {
-						return fmt.Errorf("package %s asset name conflict: %s already added from package %s",
-							pkg.PkgPath, name, orig)
-					}
-					files[name] = pkg.PkgPath
-					w, err := aarwcreate(name)
-					if err != nil {
-						return nil
-					}
-					_, err = io.Copy(w, f)
-					return err
-				})
+		err = processDirectory(assetsDir, func(srcPath, dstPath string) error {
+			f, err := os.Open(srcPath)
 			if err != nil {
 				return err
 			}
+			defer f.Close()
+			name := filepath.Join("assets", dstPath)
+			if orig, exists := files[name]; exists {
+				return fmt.Errorf("package %s asset name conflict: %s already added from package %s",
+					pkg.PkgPath, name, orig)
+			}
+			files[name] = pkg.PkgPath
+			w, err := aarwcreate(name)
+			if err != nil {
+				return nil
+			}
+			_, err = io.Copy(w, f)
+			return err
+		})
+		if err != nil {
+			return err
 		}
 	}
 
