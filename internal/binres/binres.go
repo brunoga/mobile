@@ -205,7 +205,7 @@ var skipSynthesize bool
 
 // UnmarshalXML decodes an AndroidManifest.xml document returning type XML
 // containing decoded resources.
-func UnmarshalXML(r io.Reader, withIcon bool) (*XML, error) {
+func UnmarshalXML(r io.Reader, withIcon bool, buildAndroidAPI int) (*XML, error) {
 	tbl, err := OpenTable()
 	if err != nil {
 		return nil, err
@@ -250,7 +250,7 @@ func UnmarshalXML(r io.Reader, withIcon bool) (*XML, error) {
 							Space: "",
 							Local: "platformBuildVersionCode",
 						},
-						Value: "16",
+						Value: fmt.Sprintf("%v", buildAndroidAPI),
 					},
 					xml.Attr{
 						Name: xml.Name{
@@ -274,7 +274,7 @@ func UnmarshalXML(r io.Reader, withIcon bool) (*XML, error) {
 									Space: androidSchema,
 									Local: "minSdkVersion",
 								},
-								Value: fmt.Sprintf("%v", MinSDK),
+								Value: fmt.Sprintf("%v", buildAndroidAPI),
 							},
 						},
 					}

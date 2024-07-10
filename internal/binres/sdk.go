@@ -12,18 +12,15 @@ import (
 	"github.com/brunoga/mobile/internal/sdkpath"
 )
 
-// MinSDK is the targeted sdk version for support by package binres.
-const MinSDK = 16
-
-func apiResources() ([]byte, error) {
-	apiResPath, err := apiResourcesPath()
+func apiResources(buildAndroidAPI int) ([]byte, error) {
+	apiResPath, err := apiResourcesPath(buildAndroidAPI)
 	if err != nil {
 		return nil, err
 	}
 	zr, err := zip.OpenReader(apiResPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf(`%v; consider installing with "android update sdk --all --no-ui --filter android-%d"`, err, MinSDK)
+			return nil, fmt.Errorf(`%v; consider installing with "android update sdk --all --no-ui --filter android-%d"`, err, buildAndroidAPI)
 		}
 		return nil, err
 	}
@@ -50,8 +47,8 @@ func apiResources() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func apiResourcesPath() (string, error) {
-	platformDir, err := sdkpath.AndroidAPIPath(MinSDK)
+func apiResourcesPath(buildAndroidAPI int) (string, error) {
+	platformDir, err := sdkpath.AndroidAPIPath(buildAndroidAPI)
 	if err != nil {
 		return "", err
 	}
@@ -59,8 +56,8 @@ func apiResourcesPath() (string, error) {
 }
 
 // PackResources produces a stripped down gzip version of the resources.arsc from api jar.
-func PackResources() ([]byte, error) {
-	tbl, err := OpenSDKTable()
+func PackResources(buildAndroidAPI int) ([]byte, error) {
+	tbl, err := OpenSDKTable(buildAndroidAPI)
 	if err != nil {
 		return nil, err
 	}

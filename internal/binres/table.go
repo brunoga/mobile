@@ -92,8 +92,8 @@ func NewMipmapTable(pkgname string) (*Table, string) {
 }
 
 // OpenSDKTable decodes resources.arsc from sdk platform jar.
-func OpenSDKTable() (*Table, error) {
-	bin, err := apiResources()
+func OpenSDKTable(buildAndroidAPI int) (*Table, error) {
+	bin, err := apiResources(buildAndroidAPI)
 	if err != nil {
 		return nil, err
 	}

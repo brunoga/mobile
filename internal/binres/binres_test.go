@@ -20,6 +20,10 @@ import (
 	"github.com/brunoga/mobile/internal/sdkpath"
 )
 
+const (
+	minSDK = 16
+)
+
 func init() {
 	skipSynthesize = true
 }
@@ -212,7 +216,7 @@ func TestEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bx, err := UnmarshalXML(f, false)
+	bx, err := UnmarshalXML(f, false, minSDK)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,7 +266,7 @@ func TestRawValueByName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bx, err := UnmarshalXML(f, false)
+	bx, err := UnmarshalXML(f, false, minSDK)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -318,7 +322,7 @@ func compareElements(have, want *XML) error {
 				// but following same format of all other like-types appears to work correctly.
 				// BUG(dskinner) this check is brittle as it will skip over any attribute in
 				// bootstrap.xml that has value == MinSDK.
-				if attr.TypedValue.Value == MinSDK {
+				if attr.TypedValue.Value == minSDK {
 					continue
 				}
 				fmt.Fprintf(buf, "attrs don't match\nhave: %+v\nwant: %+v\n", attr, bttr)
@@ -495,7 +499,7 @@ func TestOpenTable(t *testing.T) {
 
 func TestTableRefByName(t *testing.T) {
 	checkResources(t)
-	tbl, err := OpenSDKTable()
+	tbl, err := OpenSDKTable(minSDK)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -515,7 +519,7 @@ func TestTableRefByName(t *testing.T) {
 
 func TestTableMarshal(t *testing.T) {
 	checkResources(t)
-	tbl, err := OpenSDKTable()
+	tbl, err := OpenSDKTable(minSDK)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -634,7 +638,7 @@ func checkResources(t *testing.T) {
 	if _, err := sdkpath.AndroidHome(); err != nil {
 		t.Skip("Could not locate Android SDK")
 	}
-	rscPath, err := apiResourcesPath()
+	rscPath, err := apiResourcesPath(minSDK)
 	if err != nil {
 		t.Skipf("failed to find resources: %v", err)
 	}
