@@ -1714,6 +1714,16 @@ func (ctx *context) Viewport(x, y, width, height int) {
 	})
 }
 
+func (ctx *context) RunOnContextThread(fn func()) {
+	ctx.enqueue(call{
+		args: fnargs{
+			fn: glfnRunOnContextThread,
+		},
+		parg:     unsafe.Pointer(&fn),
+		blocking: true,
+	})
+}
+
 func (ctx context3) UniformMatrix2x3fv(dst Uniform, src []float32) {
 	ctx.enqueue(call{
 		args: fnargs{

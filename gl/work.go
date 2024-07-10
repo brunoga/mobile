@@ -111,16 +111,23 @@ func (ctx *context) enqueue(c call) uintptr {
 
 func (ctx *context) DoWork() {
 	queue := make([]call, 0, workbufLen)
+
+	var customWork *call
+
 	for {
 		// Wait until at least one piece of work is ready.
 		// Accumulate work until a piece is marked as blocking.
 		select {
 		case w := <-ctx.work:
-			queue = append(queue, w)
+			if w.args.fn == glfnRunOnContextThread {
+				customWork = &w
+			} else {
+				queue = append(queue, w)
+			}
 		default:
 			return
 		}
-		blocking := queue[len(queue)-1].blocking
+		blocking := customWork != nil || queue[len(queue)-1].blocking
 	enqueue:
 		for len(queue) < cap(queue) && !blocking {
 			select {
@@ -132,15 +139,26 @@ func (ctx *context) DoWork() {
 			}
 		}
 
-		// Process the queued GL functions.
-		for i, q := range queue {
-			ctx.cargs[i] = *(*C.struct_fnargs)(unsafe.Pointer(&q.args))
-			ctx.parg[i] = (*C.char)(q.parg)
-		}
-		ret := C.process(&ctx.cargs[0], ctx.parg[0], ctx.parg[1], ctx.parg[2], C.int(len(queue)))
+		var ret C.ulong
+		if len(queue) > 0 {
+			// Process the queued GL functions.
+			for i, q := range queue {
+				ctx.cargs[i] = *(*C.struct_fnargs)(unsafe.Pointer(&q.args))
+				ctx.parg[i] = (*C.char)(q.parg)
+			}
+			ret = C.process(&ctx.cargs[0], ctx.parg[0], ctx.parg[1], ctx.parg[2], C.int(len(queue)))
 
-		// Cleanup and signal.
-		queue = queue[:0]
+			// Cleanup.
+			queue = queue[:0]
+		}
+
+		// Process custom work if one exists.
+		if customWork != nil {
+			(*(*func())(customWork.parg))()
+			customWork = nil
+		}
+
+		// Signal.
 		if blocking {
 			ctx.retvalue <- ret
 		}

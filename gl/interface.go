@@ -837,6 +837,9 @@ type Context interface {
 	//
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glViewport.xhtml
 	Viewport(x, y, width, height int)
+
+	// RunOnContextThread runs f on the thread that handles the OpenGL context.
+	RunOnContextThread(f func())
 }
 
 // Context3 is an OpenGL ES 3 context.

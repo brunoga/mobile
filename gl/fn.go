@@ -175,6 +175,9 @@ const (
 	glfnVertexAttribPointer
 	glfnViewport
 
+	// Allows running functions on the thread that handles the OpenGL context.
+	glfnRunOnContextThread
+
 	// ES 3.0 functions
 	glfnUniformMatrix2x3fv
 	glfnUniformMatrix3x2fv
