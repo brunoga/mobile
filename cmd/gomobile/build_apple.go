@@ -425,7 +425,7 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
         TARGETED_DEVICE_FAMILY = "1,2";
         VALIDATE_PRODUCT = YES;
         ENABLE_BITCODE = YES;
-        IPHONEOS_DEPLOYMENT_TARGET = {{.BuildIOSVersion}}
+        IPHONEOS_DEPLOYMENT_TARGET = {{.BuildIOSVersion}};
       };
       name = Release;
     };
