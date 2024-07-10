@@ -180,6 +180,12 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 		}
 	}
 
+	for _, libFile := range extraLibFiles {
+		if err := apkwWriteFile(libFile, filepath.Join(dir, libFile)); err != nil {
+			return nil, err
+		}
+	}
+
 	for _, t := range targets {
 		toolchain := ndk.Toolchain(t.arch)
 		if nmpkgs[t.arch]["github.com/brunoga/mobile/exp/audio/al"] {
