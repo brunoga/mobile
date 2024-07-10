@@ -47,7 +47,8 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) 
 
 	projPbxproj := new(bytes.Buffer)
 	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
-		TeamID: teamID,
+		TeamID:          teamID,
+		BuildIOSVersion: buildIOSVersion,
 	}); err != nil {
 		return nil, err
 	}
@@ -289,7 +290,8 @@ var infoplistTmpl = template.Must(template.New("infoplist").Parse(`<?xml version
 `))
 
 type projPbxprojTmplData struct {
-	TeamID string
+	TeamID          string
+	BuildIOSVersion string
 }
 
 var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF8*$!
@@ -451,6 +453,7 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
         TARGETED_DEVICE_FAMILY = "1,2";
         VALIDATE_PRODUCT = YES;
         ENABLE_BITCODE = YES;
+        IPHONEOS_DEPLOYMENT_TARGET = {{.BuildIOSVersion}}
       };
       name = Release;
     };
