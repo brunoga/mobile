@@ -45,10 +45,16 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) 
 		return nil, err
 	}
 
+	frameworks, err := CollectBuildFrameworks(filepath.Dir(pkg.GoFiles[0]))
+	if err != nil {
+		return nil, err
+	}
+
 	projPbxproj := new(bytes.Buffer)
 	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
 		TeamID:          teamID,
 		BuildIOSVersion: buildIOSVersion,
+		Frameworks:      frameworks.AsSlice(),
 	}); err != nil {
 		return nil, err
 	}
@@ -116,6 +122,11 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) 
 
 	// TODO(jbd): Set the launcher icon.
 	if err := appleCopyAssets(pkg, tmpdir); err != nil {
+		return nil, err
+	}
+
+	// Copy frameworks to project dir.
+	if err = frameworks.Copy(tmpdir); err != nil {
 		return nil, err
 	}
 
@@ -264,6 +275,7 @@ var infoplistTmpl = template.Must(template.New("infoplist").Parse(`<?xml version
 type projPbxprojTmplData struct {
 	TeamID          string
 	BuildIOSVersion string
+	Frameworks      []Framework
 }
 
 var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF8*$!
@@ -278,16 +290,65 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
     254BB84F1B1FD08900C56DE9 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 254BB84E1B1FD08900C56DE9 /* Images.xcassets */; };
     254BB8681B1FD16500C56DE9 /* main in Resources */ = {isa = PBXBuildFile; fileRef = 254BB8671B1FD16500C56DE9 /* main */; };
     25FB30331B30FDEE0005924C /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 25FB30321B30FDEE0005924C /* assets */; };
+    {{range .Frameworks}}
+    {{.FrameworksID}} /* {{.Name}} in Frameworks */ = {isa = PBXBuildFile; fileRef = {{.FileRefID}} /* {{.Name}} */; };
+    {{.EmbedFrameworksID}} /* {{.Name}} in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = {{.FileRefID}} /* {{.Name}} */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+    {{end}}
 /* End PBXBuildFile section */
 
+{{if .Frameworks}}
+/* Begin PBXCopyFilesBuildPhase section */
+                3AB9CEE42BE0F8B700DD94A1 /* CopyFiles */ = {
+                        isa = PBXCopyFilesBuildPhase;
+                        buildActionMask = 2147483647;
+                        dstPath = "";
+                        dstSubfolderSpec = 6;
+                        files = (
+                        );
+                        runOnlyForDeploymentPostprocessing = 0;
+                };
+                3AE51F422BE10EFE00FB83D2 /* Embed Frameworks */ = {
+                        isa = PBXCopyFilesBuildPhase;
+                        buildActionMask = 2147483647;
+                        dstPath = "";
+                        dstSubfolderSpec = 10;
+                        files = (
+                                {{range .Frameworks}}
+                                {{.EmbedFrameworksID}} /* {{.Name}} in Embed Frameworks */,
+                                {{end}}
+                        );
+                        name = "Embed Frameworks";
+                        runOnlyForDeploymentPostprocessing = 0;
+                };
+/* End PBXCopyFilesBuildPhase section */
+
+{{end}}
 /* Begin PBXFileReference section */
     254BB83E1B1FD08900C56DE9 /* main.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = main.app; sourceTree = BUILT_PRODUCTS_DIR; };
     254BB8421B1FD08900C56DE9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
     254BB84E1B1FD08900C56DE9 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
     254BB8671B1FD16500C56DE9 /* main */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = main; sourceTree = "<group>"; };
     25FB30321B30FDEE0005924C /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = main/assets; sourceTree = "<group>"; };
+    {{range .Frameworks}}
+    {{.FileRefID}} /* {{.Name}} */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = unitybridge.framework; sourceTree = "<group>"; };
+    {{end}}
 /* End PBXFileReference section */
 
+{{if .Frameworks}}
+/* Begin PBXFrameworksBuildPhase section */
+                8EC5EA8429F931200015A43B /* Frameworks */ = {
+                        isa = PBXFrameworksBuildPhase;
+                        buildActionMask = 2147483647;
+                        files = (
+                                {{range .Frameworks}}
+                                {{.FrameworksID}} /* {{.Name}} in Frameworks */,
+                                {{end}}
+                        );
+                        runOnlyForDeploymentPostprocessing = 0;
+                };
+/* End PBXFrameworksBuildPhase section */
+
+{{end}}
 /* Begin PBXGroup section */
     254BB8351B1FD08900C56DE9 = {
       isa = PBXGroup;
@@ -295,10 +356,25 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
         25FB30321B30FDEE0005924C /* assets */,
         254BB8401B1FD08900C56DE9 /* main */,
         254BB83F1B1FD08900C56DE9 /* Products */,
+        {{if .Frameworks}}
+        8EC5EAC429F934C30015A43B /* Frameworks */,
+        {{end}}
       );
       sourceTree = "<group>";
       usesTabs = 0;
     };
+    {{if .Frameworks}}
+    8EC5EAC429F934C30015A43B /* Frameworks */ = {
+            isa = PBXGroup;
+            children = (
+                    {{range .Frameworks}}
+                    {{.FileRefID}} /* {{.Name}} */,
+                    {{end}}
+            );
+            path = Frameworks;
+            sourceTree = "<group>";
+    };
+    {{end}}
     254BB83F1B1FD08900C56DE9 /* Products */ = {
       isa = PBXGroup;
       children = (
@@ -332,7 +408,14 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
       isa = PBXNativeTarget;
       buildConfigurationList = 254BB8611B1FD08900C56DE9 /* Build configuration list for PBXNativeTarget "main" */;
       buildPhases = (
+        {{if .Frameworks}}
+        3AE51F422BE10EFE00FB83D2 /* Embed Frameworks */,
+        8EC5EA8429F931200015A43B /* Frameworks */,
+        {{end}}
         254BB83C1B1FD08900C56DE9 /* Resources */,
+        {{if .Frameworks}}
+        3AB9CEE42BE0F8B700DD94A1 /* CopyFiles */,
+        {{end}}
       );
       buildRules = (
       );
@@ -384,6 +467,9 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
         25FB30331B30FDEE0005924C /* assets in Resources */,
         254BB8681B1FD16500C56DE9 /* main in Resources */,
         254BB84F1B1FD08900C56DE9 /* Images.xcassets in Resources */,
+        {{if .Frameworks}}
+        25FB30331B30FDEE00065038 /* Frameworks in Resources */,
+        {{end}}
       );
       runOnlyForDeploymentPostprocessing = 0;
     };
